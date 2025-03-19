@@ -1,17 +1,16 @@
 from flask import Flask, request, send_file
-from PyPDF2 import PdfReader, PdfWriter
+import fitz  # PyMuPDF for text placement
 import io
 
 app = Flask(__name__)
 
 # Define the positions of the fields in the PDF
 def fill_pdf(data):
-    template_path = "Updated_Template.pdf"  # Ensure your PDF is in the correct location
+    template_path = "template.pdf"  # Ensure your PDF is correctly uploaded
     output_pdf = io.BytesIO()
     
-    reader = PdfReader(template_path)
-    writer = PdfWriter()
-    page = reader.pages[0]
+    doc = fitz.open(template_path)
+    page = doc[0]  # Assuming single-page PDF
     
     fields = {
         "Client_Name": (12.52, 197.18),
@@ -25,16 +24,11 @@ def fill_pdf(data):
         "Project_Title": (12.82, 188.47)
     }
     
-    writer.add_page(page)
-    
     for field, position in fields.items():
         text = data.get(field, "")
-        writer.add_annotation(
-            position[0], position[1], position[0] + 100, position[1] + 10, 
-            text=text
-        )
+        page.insert_text((position[0], position[1]), text, fontsize=10, color=(0, 0, 0))
     
-    writer.write(output_pdf)
+    doc.save(output_pdf)
     output_pdf.seek(0)
     return output_pdf
 
