@@ -1,53 +1,51 @@
 from flask import Flask, request, send_file
-from flask_cors import CORS
 from PyPDF2 import PdfReader, PdfWriter
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
 import io
 
 app = Flask(__name__)
-CORS(app)
 
-template_path = "Updated_Template.pdf"
-
+# Define the positions of the fields in the PDF
 def fill_pdf(data):
+    template_path = "template.pdf"  # Ensure your PDF is in the correct location
+    output_pdf = io.BytesIO()
+    
     reader = PdfReader(template_path)
     writer = PdfWriter()
+    page = reader.pages[0]
     
-    packet = io.BytesIO()
-    c = canvas.Canvas(packet, pagesize=letter)
+    fields = {
+        "Client_Name": (12.52, 197.18),
+        "Client_Owner": (158.04, 147.61),
+        "Client_Contact": (158.04, 133.42),
+        "Description": (12.52, 147.79),
+        "Highlights": (158.04, 73.38),
+        "Location": (12.82, 179.76),
+        "Project_Cost": (158.04, 101.33),
+        "Project_Dates": (158.04, 87.36),
+        "Project_Title": (12.82, 188.47)
+    }
     
-    # Mapping user input to designated areas
-    c.drawString(50, 700, data.get("client_name", ""))
-    c.drawString(50, 680, data.get("project_title", ""))
-    c.drawString(50, 660, data.get("location", ""))
-    c.drawString(50, 640, data.get("client_owner", ""))
-    c.drawString(50, 620, data.get("project_description", ""))
-    c.drawString(50, 600, data.get("project_cost", ""))
-    c.drawString(50, 580, data.get("project_dates", ""))
-    c.drawString(50, 560, data.get("highlights", ""))
-    c.drawString(50, 540, data.get("client_contact", ""))
+    writer.add_page(page)
     
-    c.save()
-    packet.seek(0)
-    overlay_reader = PdfReader(packet)
+    for field, position in fields.items():
+        text = data.get(field, "")
+        writer.add_annotation(
+            position[0], position[1], position[0] + 100, position[1] + 10, 
+            text=text
+        )
     
-    for page in range(len(reader.pages)):
-        original_page = reader.pages[page]
-        if page == 0:
-            original_page.merge_page(overlay_reader.pages[0])
-        writer.add_page(original_page)
-    
-    output_stream = io.BytesIO()
-    writer.write(output_stream)
-    output_stream.seek(0)
-    return output_stream
+    writer.write(output_pdf)
+    output_pdf.seek(0)
+    return output_pdf
 
-@app.route('/generate', methods=['POST'])
+@app.route("/generate", methods=["POST"])
 def generate_pdf():
-    data = request.json
-    filled_pdf = fill_pdf(data)
-    return send_file(filled_pdf, as_attachment=True, download_name="Filled_Template.pdf", mimetype='application/pdf')
+    try:
+        data = request.json
+        filled_pdf = fill_pdf(data)
+        return send_file(filled_pdf, download_name="Generated_PDF.pdf", as_attachment=True, mimetype="application/pdf")
+    except Exception as e:
+        return {"error": str(e)}, 500
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
