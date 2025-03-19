@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # Define the positions of the fields in the PDF
 def fill_pdf(data):
-    template_path = "template.pdf"  # Ensure your PDF is in the correct location
+    template_path = "Updated_Template.pdf"  # Ensure your PDF is in the correct location
     output_pdf = io.BytesIO()
     
     reader = PdfReader(template_path)
