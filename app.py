@@ -38,17 +38,26 @@ def index():
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    data = {
-        "client_name": {"x": 12.52, "y": 197.18, "value": request.form.get("client_name", "")},
-        "client_owner": {"x": 158.04, "y": 147.61, "value": request.form.get("client_owner", "")},
-        "client_contact": {"x": 158.04, "y": 133.42, "value": request.form.get("client_contact", "")},
-        "project_description": {"x": 12.52, "y": 147.79, "value": request.form.get("project_description", "")},
-        "highlights": {"x": 158.04, "y": 73.38, "value": request.form.get("highlights", "")},
-        "location": {"x": 12.82, "y": 179.76, "value": request.form.get("location", "")},
-        "project_cost": {"x": 158.04, "y": 101.33, "value": request.form.get("project_cost", "")},
-        "project_dates": {"x": 158.04, "y": 87.36, "value": request.form.get("project_dates", "")},
-        "project_title": {"x": 12.82, "y": 188.47, "value": request.form.get("project_title", "")}
+    data = request.json  # Read JSON data from frontend
+    
+    formatted_data = {
+        "client_name": {"x": 12.52, "y": 197.18, "value": data.get("client_name", "")},
+        "client_owner": {"x": 158.04, "y": 147.61, "value": data.get("client_owner", "")},
+        "client_contact": {"x": 158.04, "y": 133.42, "value": data.get("client_contact", "")},
+        "project_description": {"x": 12.52, "y": 147.79, "value": data.get("project_description", "")},
+        "highlights": {"x": 158.04, "y": 73.38, "value": data.get("highlights", "")},
+        "location": {"x": 12.82, "y": 179.76, "value": data.get("location", "")},
+        "project_cost": {"x": 158.04, "y": 101.33, "value": data.get("project_cost", "")},
+        "project_dates": {"x": 158.04, "y": 87.36, "value": data.get("project_dates", "")},
+        "project_title": {"x": 12.82, "y": 188.47, "value": data.get("project_title", "")}
     }
+    
+    filled_pdf = fill_pdf(formatted_data)
+    if not filled_pdf:
+        return "Error loading PDF template.", 500
+    
+    return send_file(filled_pdf, as_attachment=False, mimetype="application/pdf")
+
     
     filled_pdf = fill_pdf(data)
     if not filled_pdf:
