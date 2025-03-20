@@ -1,45 +1,53 @@
-from flask import Flask, request, send_file
-import fitz  # PyMuPDF for text placement
+from flask import Flask, request, render_template, send_file
+import fitz  # PyMuPDF
 import io
+import requests
 
 app = Flask(__name__)
 
-# Define the positions of the fields in the PDF
+# GitHub PDF Template URL (Updated)
+GITHUB_PDF_URL = "https://raw.githubusercontent.com/imsrkno1/pdf-live-input-backend/main/Updated_Template.pdf"
+
 def fill_pdf(data):
-    template_path = "template.pdf"  # Ensure your PDF is correctly uploaded
-    output_pdf = io.BytesIO()
+    response = requests.get(GITHUB_PDF_URL)
+    if response.status_code != 200:
+        return None
     
-    doc = fitz.open(template_path)
-    page = doc[0]  # Assuming single-page PDF
+    pdf_bytes = response.content
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     
-    fields = {
-        "Client_Name": (12.52, 197.18),
-        "Client_Owner": (158.04, 147.61),
-        "Client_Contact": (158.04, 133.42),
-        "Description": (12.52, 147.79),
-        "Highlights": (158.04, 73.38),
-        "Location": (12.82, 179.76),
-        "Project_Cost": (158.04, 101.33),
-        "Project_Dates": (158.04, 87.36),
-        "Project_Title": (12.82, 188.47)
+    for page in doc:
+        for field in data:
+            page.insert_text((data[field]['x'], data[field]['y']), data[field]['value'], fontsize=12)
+    
+    output_stream = io.BytesIO()
+    doc.save(output_stream)
+    output_stream.seek(0)
+    return output_stream
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf():
+    data = {
+        "client_name": {"x": 12.52, "y": 197.18, "value": request.form.get("client_name", "")},
+        "client_owner": {"x": 158.04, "y": 147.61, "value": request.form.get("client_owner", "")},
+        "client_contact": {"x": 158.04, "y": 133.42, "value": request.form.get("client_contact", "")},
+        "project_description": {"x": 12.52, "y": 147.79, "value": request.form.get("project_description", "")},
+        "highlights": {"x": 158.04, "y": 73.38, "value": request.form.get("highlights", "")},
+        "location": {"x": 12.82, "y": 179.76, "value": request.form.get("location", "")},
+        "project_cost": {"x": 158.04, "y": 101.33, "value": request.form.get("project_cost", "")},
+        "project_dates": {"x": 158.04, "y": 87.36, "value": request.form.get("project_dates", "")},
+        "project_title": {"x": 12.82, "y": 188.47, "value": request.form.get("project_title", "")}
     }
     
-    for field, position in fields.items():
-        text = data.get(field, "")
-        page.insert_text((position[0], position[1]), text, fontsize=10, color=(0, 0, 0))
+    filled_pdf = fill_pdf(data)
+    if not filled_pdf:
+        return "Error loading PDF template.", 500
     
-    doc.save(output_pdf)
-    output_pdf.seek(0)
-    return output_pdf
+    return send_file(filled_pdf, as_attachment=True, download_name="filled_form.pdf", mimetype="application/pdf")
 
-@app.route("/generate", methods=["POST"])
-def generate_pdf():
-    try:
-        data = request.json
-        filled_pdf = fill_pdf(data)
-        return send_file(filled_pdf, download_name="Generated_PDF.pdf", as_attachment=True, mimetype="application/pdf")
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
