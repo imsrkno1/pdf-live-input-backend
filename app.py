@@ -38,22 +38,7 @@ def index():
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    data = request.json  # Read JSON data from frontend
-    
-    formatted_data = {
-        "client_name": {"x": 12.52, "y": 197.18, "value": data.get("client_name", "")},
-        "client_owner": {"x": 158.04, "y": 147.61, "value": data.get("client_owner", "")},
-        "client_contact": {"x": 158.04, "y": 133.42, "value": data.get("client_contact", "")},
-        "project_description": {"x": 12.52, "y": 147.79, "value": data.get("project_description", "")},
-        "highlights": {"x": 158.04, "y": 73.38, "value": data.get("highlights", "")},
-        "location": {"x": 12.82, "y": 179.76, "value": data.get("location", "")},
-        "project_cost": {"x": 158.04, "y": 101.33, "value": data.get("project_cost", "")},
-        "project_dates": {"x": 158.04, "y": 87.36, "value": data.get("project_dates", "")},
-        "project_title": {"x": 12.82, "y": 188.47, "value": data.get("project_title", "")}
-    }
-    
-   @app.route('/generate_pdf', methods=['POST'])
-def generate_pdf():
+    """API Endpoint to generate a filled PDF"""
     data = request.json  # Read JSON data from frontend
     
     formatted_data = {
@@ -74,5 +59,6 @@ def generate_pdf():
     
     return send_file(filled_pdf, as_attachment=False, mimetype="application/pdf")
 
-    if __name__ == '__main__':
+# Ensure the Flask app runs only if executed directly
+if __name__ == '__main__':
     app.run(debug=True)
