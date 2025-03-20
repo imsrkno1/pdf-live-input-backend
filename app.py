@@ -27,7 +27,7 @@ def fill_pdf(data):
 
 @app.route('/')
 def index():
-    return "PDF API is running successfully!"
+    return render_template('index.html')
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
