@@ -1,9 +1,11 @@
 from flask import Flask, request, render_template, send_file
+from flask_cors import CORS
 import fitz  # PyMuPDF
 import io
 import requests
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all requests
 
 # GitHub PDF Template URL (Updated)
 GITHUB_PDF_URL = "https://raw.githubusercontent.com/imsrkno1/pdf-live-input-backend/main/Updated_Template.pdf"
@@ -38,7 +40,9 @@ def index():
 
 @app.route('/generate_pdf', methods=['POST'])
 def generate_pdf():
-    """API Endpoint to generate a filled PDF"""
+    if not request.is_json:
+        return "Unsupported Media Type: Use application/json", 415
+    
     data = request.json  # Read JSON data from frontend
     
     formatted_data = {
@@ -59,6 +63,5 @@ def generate_pdf():
     
     return send_file(filled_pdf, as_attachment=False, mimetype="application/pdf")
 
-# Ensure the Flask app runs only if executed directly
 if __name__ == '__main__':
     app.run(debug=True)
