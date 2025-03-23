@@ -9,7 +9,7 @@ CORS(app)  # Allow frontend to access backend
 # Path to your fillable PDF template
 TEMPLATE_PDF = "Updated_Template.pdf"
 
-@app.route("/generate-pdf", methods=["POST"])
+@app.route("/generate_pdf", methods=["POST"])
 def generate_pdf():
     data = request.json  # Get user input from frontend
     doc = fitz.open(TEMPLATE_PDF)  # Open PDF template
