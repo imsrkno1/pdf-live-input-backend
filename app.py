@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import fitz  # PyMuPDF
 
 app = Flask(__name__)
@@ -6,13 +6,19 @@ app = Flask(__name__)
 @app.route("/check_fields", methods=["GET"])
 def check_fields():
     try:
-        doc = fitz.open("Updated_Template.pdf")
-        fields = [field.info for page in doc for field in page.annots()]
-        
+        doc = fitz.open("Updated_Template.pdf")  # Load the updated PDF
+        fields = []
+
+        for page in doc:
+            for field in page.widgets():  # Try detecting fields
+                fields.append(field.field_name)
+
+        doc.close()
+
         if not fields:
             return jsonify({"error": "No fillable form fields found in PDF!"}), 500
-        
-        return jsonify({"Form Fields": fields})
+
+        return jsonify({"fillable_fields": fields})  # Return detected fields
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
