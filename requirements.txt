@@ -1,6 +1,6 @@
 Flask
 Flask-Cors
-pymupdf>=1.21
+pymupdf
 reportlab
 gunicorn
 requests
