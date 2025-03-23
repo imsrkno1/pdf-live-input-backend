@@ -1,33 +1,49 @@
+import os
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import fitz  # PyMuPDF
 import io
 
-# Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend access
+
+PDF_PATH = "Updated_Template.pdf"
 
 @app.route("/", methods=["GET"])
 def home():
     return "Flask API is running!"
 
-@app.route("/check_pymupdf", methods=["GET"])
-def check_pymupdf():
-    try:
-        import pymupdf
-        return jsonify({"PyMuPDF Version": pymupdf.__version__})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-@app.route("/debug_widgets", methods=["GET"])
-def debug_widgets():
+
+@app.route("/check_fields", methods=["GET"])
+def check_fields():
+    """Check available form fields in the PDF"""
     try:
-        doc = fitz.open("Updated_Template.pdf")
+        doc = fitz.open(PDF_PATH)
+        doc.update_widgets()  # Ensure fields are loaded
         fields = [field.field_name for field in doc.widgets()]
         doc.close()
-        return jsonify({"widgets": fields})
+
+        if not fields:
+            return jsonify({"error": "No fillable form fields found in PDF!"}), 500
+        
+        return jsonify({"fillable_fields": fields})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+@app.route("/generate_pdf", methods=["POST"])
+def generate_pdf():
+    """Generate a filled PDF based on user input"""
+    try:
+        if not os.path.exists(PDF_PATH):
+            return jsonify({"error": "PDF template not found!"}), 500
+
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data received"}), 400
+
+        doc = fitz.open(PDF_PATH)
+        doc.update_widgets()  # Ensure all form fields are loaded
+
+        filled_fields = []
