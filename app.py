@@ -18,8 +18,13 @@ def check_fields():
     """Check available form fields in the PDF"""
     try:
         doc = fitz.open(PDF_PATH)
-        doc.update_widgets()  # Ensure fields are loaded
-        fields = [field.field_name for field in doc.widgets()]
+        fields = []
+
+        # New method: Loop through pages and get form fields
+        for page in doc.pages():
+            for field in page.widgets():  # Correct way to access fields
+                fields.append(field.field_name)
+
         doc.close()
 
         if not fields:
@@ -42,15 +47,16 @@ def generate_pdf():
             return jsonify({"error": "No data received"}), 400
 
         doc = fitz.open(PDF_PATH)
-        doc.update_widgets()  # Ensure all form fields are loaded
-
         filled_fields = []
-        for field in doc.widgets():
-            if field.field_name in data:
-                field.field_value = data[field.field_name]  # Set text in the field
-                field.text_fontsize = 12  # Fix font size to 12pt
-                field.update()
-                filled_fields.append(field.field_name)
+
+        # New method: Loop through pages and fill form fields
+        for page in doc.pages():
+            for field in page.widgets():  
+                if field.field_name in data:
+                    field.field_value = data[field.field_name]  # Set text
+                    field.text_fontsize = 12  # Fix font size to 12pt
+                    field.update()
+                    filled_fields.append(field.field_name)
 
         if not filled_fields:
             return jsonify({"error": "No fields were filled!"}), 500
