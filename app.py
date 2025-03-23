@@ -13,8 +13,6 @@ PDF_PATH = "Updated_Template.pdf"
 def home():
     return "Flask API is running!"
 
-
-
 @app.route("/check_fields", methods=["GET"])
 def check_fields():
     """Check available form fields in the PDF"""
@@ -47,3 +45,27 @@ def generate_pdf():
         doc.update_widgets()  # Ensure all form fields are loaded
 
         filled_fields = []
+        for field in doc.widgets():
+            if field.field_name in data:
+                field.field_value = data[field.field_name]  # Set text in the field
+                field.text_fontsize = 12  # Fix font size to 12pt
+                field.update()
+                filled_fields.append(field.field_name)
+
+        if not filled_fields:
+            return jsonify({"error": "No fields were filled!"}), 500
+
+        # Save the modified PDF
+        pdf_bytes = io.BytesIO()
+        doc.save(pdf_bytes)
+        doc.close()
+        pdf_bytes.seek(0)
+
+        return send_file(pdf_bytes, mimetype="application/pdf")
+
+    except Exception as e:
+        print("Internal Server Error:", str(e))
+        return jsonify({"error": "Internal Server Error", "details": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
