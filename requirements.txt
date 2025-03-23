@@ -1,7 +1,6 @@
 Flask
 Flask-Cors
-PyPDF2
+pymupdf>=1.21
 reportlab
 gunicorn
-pymupdf
 requests
