@@ -5,16 +5,19 @@ app = Flask(__name__)
 
 PDF_PATH = "Updated_Template.pdf"
 
-@app.route("/debug_pdf", methods=["GET"])
-def debug_pdf():
+@app.route("/debug_annots", methods=["GET"])
+def debug_annots():
     try:
         doc = fitz.open(PDF_PATH)
-        fields_widgets = [field.field_name for field in doc.widgets()]
-        fields_annots = [field.info.get("title", "Unknown Field") for page in doc for field in page.annots()]
+        fields_annots = []
+
+        for page in doc:
+            for field in page.annots():
+                fields_annots.append(field.info.get("title", "Unknown Field"))
 
         doc.close()
 
-        return jsonify({"widgets": fields_widgets, "annotations": fields_annots})
+        return jsonify({"annotations": fields_annots})
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
