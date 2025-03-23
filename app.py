@@ -1,12 +1,12 @@
 from flask import Flask, request, send_file
-from flask_cors import CORS  # Import CORS
+from flask_cors import CORS  # Enable CORS
 import fitz  # PyMuPDF
 import io
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)  # Allow frontend to access backend
 
-# Path to your fillable PDF template (Upload this file to Render)
+# Path to your fillable PDF template
 TEMPLATE_PDF = "Updated_Template.pdf"
 
 @app.route("/generate-pdf", methods=["POST"])
@@ -14,13 +14,23 @@ def generate_pdf():
     data = request.json  # Get user input from frontend
     doc = fitz.open(TEMPLATE_PDF)  # Open PDF template
 
-    # Get all fillable fields
-    fields = doc.widgets()
+    # Correct field mapping
+    field_mapping = {
+        "Client Name": "Client Name",
+        "Project Title": "Project Title",
+        "Location": "Location",
+        "Client/Owner": "Client/Owner",
+        "Project Description": "Description",
+        "Project Cost": "PROJECT COST",
+        "Project Dates": "PROJECT COST 1",
+        "Highlights": "PROJECT COST 2",
+        "Client Contact": "Client Contact"
+    }
 
     # Fill form fields with user input
-    for field in fields:
-        if field.field_name in data:
-            field.text = data[field.field_name]  # Assign input text
+    for field in doc.widgets():
+        if field.field_name in field_mapping and field_mapping[field.field_name] in data:
+            field.text = data[field_mapping[field.field_name]]
             field.update()  # Apply changes
 
     # Save the modified PDF into memory
